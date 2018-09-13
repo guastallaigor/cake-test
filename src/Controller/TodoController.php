@@ -27,6 +27,7 @@ class TodoController extends AppController
 
     public function index()
     {
+        $this->request->allowMethod(['GET']);
         $todos = $this->Todo->find('all');
         $this->set([
             'todos' => $todos,
@@ -36,50 +37,54 @@ class TodoController extends AppController
 
     public function add()
     {
+        $this->request->allowMethod(['POST']);
         $todo = $this->Todo->newEntity($this->request->getData());
         $message = 'Error';
 
         if ($this->Todo->save($todo)) {
             $message = 'Saved';
+            $this->response = $this->response->withStatus(201);
         }
 
         $this->set([
             'message' => $message,
-            'recipe' => $todo,
-            '_serialize' => ['message', 'recipe']
+            'todo' => $todo,
+            '_serialize' => ['message', 'todo']
         ]);
     }
 
     public function edit($id)
     {
-        $todo = $this->Todo->get($id);
-
-        if ($this->request->is(['post', 'put'])) {
-            $todo = $this->Todo->patchEntity($todo, $this->request->getData());
-            $message = 'Error';
-
-            if ($this->Todo->save($todo)) {
-                $message = 'Saved';
-            }
+        if (!($this->request->is(['PATCH', 'PUT']))) {
+            return;
         }
+
+        $todo = $this->Todo->get($id);
+        $todoPatched = $this->Todo->patchEntity($todo, $this->request->getData());
+        $message = 'Error';
+        $this->response = $this->response->withStatus(400);
+
+        if ($this->Todo->save($todoPatched)) {
+            $message = 'Edited';
+            $this->response = $this->response->withStatus(200);
+        }
+
         $this->set([
             'message' => $message,
-            '_serialize' => ['message']
+            'todo' => $todoPatched,
+            '_serialize' => ['message', 'todo']
         ]);
     }
 
     public function delete($id)
     {
+        $this->request->allowMethod(['DELETE']);
         $todo = $this->Todo->get($id);
-        $message = 'Deleted';
 
         if (!$this->Todo->delete($todo)) {
-            $message = 'Error';
+            $this->response = $this->response->withStatus(400);
         }
 
-        $this->set([
-            'message' => $message,
-            '_serialize' => ['message']
-        ]);
+        $this->response = $this->response->withStatus(204);
     }
 }

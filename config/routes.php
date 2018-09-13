@@ -60,8 +60,10 @@ Router::scope('/', function (RouteBuilder $routes) {
     $routes->connect('/pages/*', ['controller' => 'Pages', 'action' => 'display']);
 
     $routes->resources('Todo', [
-        'only' => ['index', 'add', 'edit', 'delete']
+        'only' => ['index', 'create', 'update', 'delete']
     ]);
+
+    $routes->resources('Articles');
 
     /**
      * Connect catchall routes for all controllers.
